@@ -95,6 +95,9 @@ def decline_population(parents: list[str], population: int) -> list[str]:
     print([fitness_function(get_int(x)) for x in parents])
     return sorted(parents.copy(), key=lambda x: fitness_function(get_int(x)), reverse=True)[:population]
 
+def is_the_best_population(parents: list[str]):
+    pass
+
 
 def generic_algorithm():
     p = generate_parents(g_population, g_x_range, g_bit_size)
@@ -110,7 +113,8 @@ def generic_algorithm():
         # print('parents = ', p)
         p = decline_population(p, g_population)
         # print('parents = ', p)
+        if is_the_best_population(p):
+            return
 
 
 generic_algorithm()
-
