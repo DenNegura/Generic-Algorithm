@@ -1,8 +1,9 @@
 {
     "function": [-6, -20, -38, -61],
     "range": [0, 64],
-    "mutation": 0.5,
+    "mutation": 0.7,
     "population": 4,
     "bit_size": 6,
-    "child_count": 2
+    "child_count": 2,
+    "level_quality": 10
 }

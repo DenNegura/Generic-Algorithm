@@ -10,10 +10,22 @@ g_x_range = settings.get('range')  # диапозон
 g_mutation = settings.get('mutation')  # частота мутации
 g_bit_size = settings.get('bit_size')  # колисчество первых битов числа
 g_children_count = settings.get('child_count')  # количество потомков одной семьи
+g_max_level_quality = settings.get('level_quality')  # максимальное количество повторений для остановки
 
 
 def fitness_function(x: int) -> int:
     return -1 * (x - 6) * (x - 20) * (x - 38) * (x - 61)  # 12 вариант
+
+
+def get_max_value_function(function, x_range) -> tuple[int, int]:
+    max_value = function(x_range[0])
+    max_index = x_range[0]
+    for i in range(x_range[0] + 1, x_range[1]):
+        value = function(i)
+        if max_value < value:
+            max_value = value
+            max_index = i
+    return max_value, max_index
 
 
 def get_bits(num: int, bit_size: int) -> str:
@@ -91,29 +103,45 @@ def extension_population(parents: list[str], children: list[str]) -> list[str]:
 
 
 def decline_population(parents: list[str], population: int) -> list[str]:
-    print([get_int(x) for x in parents])
-    print([fitness_function(get_int(x)) for x in parents])
     return sorted(parents.copy(), key=lambda x: fitness_function(get_int(x)), reverse=True)[:population]
 
-def is_the_best_population(parents: list[str]):
-    pass
+
+def is_equals_to(x_value: int, parents: list[str]) -> bool:
+    for parent in parents:
+        if get_int(parent) != x_value:
+            return False
+    return True
 
 
 def generic_algorithm():
-    p = generate_parents(g_population, g_x_range, g_bit_size)
-    print('parents = ', p)
+    max_value = get_max_value_function(fitness_function, g_x_range)[1]
+    recent_level_quality = 0
+    real_x_value = None
+
+    parents = generate_parents(g_population, g_x_range, g_bit_size)
+    print('parents = ', parents)
     # logger.write('parents =', p)
-    for i in range(100):
-        f = create_families(p)
-        # print('families = ', f)
-        c = crossing(f, g_children_count)
-        c = mutation(c, g_mutation)
-        # print('children = ', c)
-        p = extension_population(p, c)
-        # print('parents = ', p)
-        p = decline_population(p, g_population)
-        # print('parents = ', p)
-        if is_the_best_population(p):
+    while True:
+        families = create_families(parents)
+        children = crossing(families, g_children_count)
+        children = mutation(children, g_mutation)
+        parents = extension_population(parents, children)
+        parents = decline_population(parents, g_population)
+
+        print([get_int(x) for x in parents])
+        print([fitness_function(get_int(x)) for x in parents])
+
+        if is_equals_to(max_value, parents):
+            print("stop by max value")
+            return
+
+        if real_x_value != get_int(parents[0]):
+            real_x_value = get_int(parents[0])
+            recent_level_quality = 0
+        if is_equals_to(real_x_value, parents):
+            recent_level_quality += 1
+        if recent_level_quality == g_max_level_quality:
+            print("stop by level quality")
             return
 
 
