@@ -1,77 +1,50 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
 
-import random
+# Определение функции
+def my_function(x):
+    return np.sin(x)  # Пример функции, замените на свою функцию
 
+# Создание данных
+x = np.linspace(0, 2 * np.pi, 100)  # Диапазон значений x от 0 до 2*pi
+y = my_function(x)  # Вычисление значений функции для всех x
 
-# Функция для создания случайной популяции
-def create_population(population_size, chromosome_length):
-    population = []
-    for _ in range(population_size):
-        chromosome = [random.randint(0, 1) for _ in range(chromosome_length)]
-        population.append(chromosome)
-    return population
+# Создание фигуры и осей
+fig, ax = plt.subplots()
+plt.subplots_adjust(bottom=0.12)  # Размещение кнопки
 
+# Нарисовать график функции
+line, = ax.plot(x, y, label='Функция')
 
-# Функция для вычисления пригодности (fitness) каждого хромосомы
-def calculate_fitness(chromosome):
-    # Здесь нужно реализовать вашу функцию оценки пригодности
-    # Чем лучше хромосома, тем больше значение fitness
-    return sum(chromosome)
+# Определите точки для добавления на график
+x_points = [np.pi/2, np.pi/2, np.pi/2, 3*np.pi/2, 3*np.pi/2]  # Пример значений x, в которых нужно отобразить точки
+y_points = my_function(x_points)  # Значения функции в заданных точках
 
+# Нарисуйте точки на графике с указанием описаний
+scatter = ax.scatter(x_points, y_points, color='red', label='Точки')  # Красные точки
 
-# Функция для выбора родителей на основе рулеточного отбора
-def select_parents(population, fitness_values):
-    total_fitness = sum(fitness_values)
-    probabilities = [fitness / total_fitness for fitness in fitness_values]
-    parents = random.choices(population, probabilities, k=2)
-    return parents
+# Добавить метки к точкам
+for i, txt in enumerate(y_points):
+    ax.text(x_points[i], y_points[i], f'({x_points[i]:.2f}, {txt:.2f})', ha='right')
 
+# Добавить заголовок и метки осей
+plt.title('График функции с точками и метками')
+plt.xlabel('Ось X')
+plt.ylabel('Ось Y')
 
-# Функция для скрещивания двух родителей и создания потомка
-def crossover(parent1, parent2):
-    crossover_point = random.randint(1, len(parent1) - 1)
-    child = parent1[:crossover_point] + parent2[crossover_point:]
-    return child
+# Функция для обработки нажатия кнопки
+def toggle_points(event):
+    if scatter.get_visible():
+        scatter.set_visible(False)
+    else:
+        scatter.set_visible(True)
+    plt.draw()
 
+# Создание кнопки
+ax_button = plt.axes([0.01, 0.01, .05, .05])  # Позиция кнопки
+button = Button(ax_button, 'П 0')
+button.on_clicked(toggle_points)  # Назначение функции на событие нажатия кнопки
 
-# Функция для мутации потомка
-def mutate(chromosome, mutation_rate):
-    for i in range(len(chromosome)):
-        if random.random() < mutation_rate:
-            chromosome[i] = 1 - chromosome[i]
-    return chromosome
-
-
-# Генетический алгоритм
-def genetic_algorithm(population_size, chromosome_length, generations, mutation_rate):
-    population = create_population(population_size, chromosome_length)
-
-    for _ in range(generations):
-        fitness_values = [calculate_fitness(chromosome) for chromosome in population]
-
-        new_population = []
-        for _ in range(population_size // 2):
-            parent1, parent2 = select_parents(population, fitness_values)
-            child1 = crossover(parent1, parent2)
-            child2 = crossover(parent2, parent1)
-            child1 = mutate(child1, mutation_rate)
-            child2 = mutate(child2, mutation_rate)
-            new_population.extend([child1, child2])
-
-        population = new_population
-
-    best_chromosome = max(population, key=calculate_fitness)
-    best_fitness = calculate_fitness(best_chromosome)
-
-    return best_chromosome, best_fitness
-
-
-# Пример использования генетического алгоритма
-population_size = 100
-chromosome_length = 10
-generations = 100
-mutation_rate = 0.01
-
-best_chromosome, best_fitness = genetic_algorithm(population_size, chromosome_length, generations, mutation_rate)
-
-print("Best chromosome:", best_chromosome)
-print("Best fitness:", best_fitness)
+# Показать график
+plt.show()

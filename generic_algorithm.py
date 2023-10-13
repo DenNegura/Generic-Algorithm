@@ -1,21 +1,5 @@
 import random
 
-from settings import Settings
-
-settings = Settings()
-# logger = Logger('report_', '.txt')
-
-g_population = settings.get('population')  # количество экземпляров популяции
-g_x_range = settings.get('range')  # диапозон
-g_mutation = settings.get('mutation')  # частота мутации
-g_bit_size = settings.get('bit_size')  # колисчество первых битов числа
-g_children_count = settings.get('child_count')  # количество потомков одной семьи
-g_max_level_quality = settings.get('level_quality')  # максимальное количество повторений для остановки
-
-
-def fitness_function(x: int) -> int:
-    return -1 * (x - 6) * (x - 20) * (x - 38) * (x - 61)  # 12 вариант
-
 
 def get_max_value_function(function, x_range) -> tuple[int, int]:
     max_value = function(x_range[0])
@@ -46,7 +30,7 @@ def randrange(start: int, stop: int, exclude_list=None) -> int:
     return rand_num
 
 
-def generate_parents(population: int, x_range: list[int], bit_size: int) -> list[str]:
+def generate_parents(population: int, x_range: list[int], bit_size: int, fitness_function) -> list[str]:
     parents = []
     for i in range(population):
         x = fitness_function(x=randrange(*x_range))
@@ -102,7 +86,7 @@ def extension_population(parents: list[str], children: list[str]) -> list[str]:
     return parents + children
 
 
-def decline_population(parents: list[str], population: int) -> list[str]:
+def decline_population(parents: list[str], population: int, fitness_function) -> list[str]:
     return sorted(parents.copy(), key=lambda x: fitness_function(get_int(x)), reverse=True)[:population]
 
 
@@ -113,26 +97,32 @@ def is_equals_to(x_value: int, parents: list[str]) -> bool:
     return True
 
 
-def generic_algorithm() -> list[list[int]]:
-    max_value = get_max_value_function(fitness_function, g_x_range)[1]
+def generic_algorithm(
+        population: int,
+        x_range: list[int],
+        bit_size: int,
+        children_count: int,
+        mutation_probability: float,
+        max_level_quality: int,
+        fitness_function) -> list[list[int]]:
+    max_value = get_max_value_function(fitness_function, x_range)[1]
     recent_level_quality = 0
     real_x_value = None
     history = []
 
-    parents = generate_parents(g_population, g_x_range, g_bit_size)
+    parents = generate_parents(population, x_range, bit_size, fitness_function)
     history.append([get_int(x) for x in parents])
 
     while True:
         families = create_families(parents)
-        children = crossing(families, g_children_count)
-        children = mutation(children, g_mutation)
+        children = crossing(families, children_count)
+        children = mutation(children, mutation_probability)
         parents = extension_population(parents, children)
-        parents = decline_population(parents, g_population)
+        parents = decline_population(parents, population, fitness_function)
 
         history.append([get_int(x) for x in parents])
 
         if is_equals_to(max_value, parents):
-            print("stop by max value")
             return history
 
         if real_x_value != get_int(parents[0]):
@@ -140,10 +130,5 @@ def generic_algorithm() -> list[list[int]]:
             recent_level_quality = 0
         if is_equals_to(real_x_value, parents):
             recent_level_quality += 1
-        if recent_level_quality == g_max_level_quality:
-            print("stop by level quality")
+        if recent_level_quality == max_level_quality:
             return history
-
-
-history = generic_algorithm()
-print(history)
